@@ -8,6 +8,10 @@ import router from "./router";
 import "v-calendar/style.css";
 import { setupCalendar } from "v-calendar";
 
+import 'vue-datepicker-next/index.css';
+
+import 'vue-datepicker-next/locale/zh-cn';
+
 const app = createApp(App);
 
 app.use(createPinia());

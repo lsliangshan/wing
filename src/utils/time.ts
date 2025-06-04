@@ -1,7 +1,7 @@
 export function formatDateForSchedule(params: {
   date: string;
-  showWeekday: boolean;
-  showDayPeriod: boolean;
+  showWeekday?: boolean;
+  showDayPeriod?: boolean;
 }): string {
   if (!params.date) {
     return "";
