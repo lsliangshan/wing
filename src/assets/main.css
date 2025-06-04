@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@plugin "daisyui";
+@import './base.css';
+
+#app {
+  height: 100vh;
+}
