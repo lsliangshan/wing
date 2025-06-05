@@ -7,6 +7,7 @@ import { defineStore } from "pinia";
 import SharedWorkerConstructor from "@/workers/shared.worker?sharedworker";
 import { ref, onMounted } from "vue";
 import { EMessageType } from "@/types";
+import { formatTimeRange } from "@/utils/time";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 10);
 
@@ -134,6 +135,13 @@ export const useMessageStore = defineStore("message", () => {
 
   function createSchedule(params: { data: any }) {
     return new Promise((resolve, reject) => {
+      const schedules = [...params.data.schedule].map((item) => {
+        return {
+          ...item,
+          dateStr: formatTimeRange(item.start, item.end),
+        };
+      });
+
       const id = nanoid();
       sharedWorker.value.port.postMessage({
         type: EMessageType.request,
@@ -143,7 +151,10 @@ export const useMessageStore = defineStore("message", () => {
           url: `https://wf.qyflows.com/webhook${
             env === "local" ? "-test" : ""
           }/class/schedule`,
-          data: params.data,
+          data: {
+            ...params.data,
+            schedule: schedules,
+          },
         },
       });
 

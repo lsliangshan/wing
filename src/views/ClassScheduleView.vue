@@ -381,8 +381,8 @@ async function getScheduleByClassId(classId: string) {
       row_number: 2,
       id: "3d8b8bab-5fec-4b6c-941d-1d0257770562",
       class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-      start: "1749115179804",
-      end: "1749115179804",
+      start: "1749213600000",
+      end: "1749216600000",
       repeat: true,
       attachments: [
         "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
