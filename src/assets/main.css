@@ -5,3 +5,16 @@
 #app {
   height: 100vh;
 }
+
+.Vue-Toastification__toast {
+  padding: 10px 20px!important;
+  min-height: 32px!important;
+  min-width: unset!important;
+  
+}
+
+.Vue-Toastification__toast-body {
+  margin-top: 2px!important;
+}
+
+
