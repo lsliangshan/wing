@@ -12,7 +12,7 @@ import { formatTimeRange } from "@/utils/time";
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 10);
 
 export const useMessageStore = defineStore("message", () => {
-  const env: "local" | "prod" = "prod";
+  const env: "local" | "prod" = "local";
 
   const sharedWorker = ref(new SharedWorkerConstructor());
 
@@ -149,7 +149,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "POST",
           url: `https://wf.qyflows.com/webhook${
-            env !== "local" ? "-test" : ""
+            env === "local" ? "-test" : ""
           }/class/schedule`,
           data: {
             ...params.data,
@@ -186,6 +186,33 @@ export const useMessageStore = defineStore("message", () => {
     });
   }
 
+  function addTeacher(params: {
+    name: string;
+    en_name: string;
+    gender: string;
+    type: string;
+  }) {
+    return new Promise((resolve, reject) => {
+      const id = nanoid();
+      sharedWorker.value.port.postMessage({
+        type: EMessageType.request,
+        message: {
+          id,
+          method: "POST",
+          url: `https://wf.qyflows.com/webhook${
+            env === "local" ? "-test" : ""
+          }/add-teacher`,
+          data: params,
+        },
+      });
+
+      promises[id] = {
+        resolve,
+        reject,
+      };
+    });
+  }
+
   return {
     sharedWorker,
     request,
@@ -194,5 +221,6 @@ export const useMessageStore = defineStore("message", () => {
     getAllClass,
     createSchedule,
     getScheduleByClassId,
+    addTeacher,
   };
 });
