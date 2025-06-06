@@ -12,7 +12,7 @@ import { formatTimeRange } from "@/utils/time";
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 10);
 
 export const useMessageStore = defineStore("message", () => {
-  const env: "local" | "prod" = "local";
+  const env: "local" | "prod" = "prod";
 
   const sharedWorker = ref(new SharedWorkerConstructor());
 
@@ -149,7 +149,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "POST",
           url: `https://wf.qyflows.com/webhook${
-            env === "local" ? "-test" : ""
+            env !== "local" ? "-test" : ""
           }/class/schedule`,
           data: {
             ...params.data,

@@ -44,7 +44,6 @@ export function formatDateForSchedule(params: {
     .replace("ss", second);
 }
 
-
 export function formatTimeRange(start: number, end: number): string {
   const startDate = new Date(start);
   const endDate = new Date(end);
@@ -54,44 +53,47 @@ export function formatTimeRange(start: number, end: number): string {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   // 计算 startDate 与今天的天数差
-  const diffDays = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor(
+    (startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(startDate);
+  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
 
   // 确定日期描述
-  let dayLabel = '';
+  let dayLabel = "";
   if (diffDays === 0) {
-    dayLabel = '今天';
+    dayLabel = `今天（${map.month}月${map.day}日）`;
   } else if (diffDays === 1) {
-    dayLabel = '明天';
+    dayLabel = `明天（${map.month}月${map.day}日）`;
   } else if (diffDays === 2) {
-    dayLabel = '后天';
+    dayLabel = `后天（${map.month}月${map.day}日）`;
   } else {
-    const parts = new Intl.DateTimeFormat("zh-CN", {
-      month: '2-digit',
-      day: '2-digit',
-    }).formatToParts(startDate);
-    const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
     dayLabel = `${map.month}月${map.day}日`;
   }
 
   // 确定时间段
   const startHour = startDate.getHours();
-  let period = '';
+  let period = "";
   if (startHour < 12) {
-    period = '上午';
+    period = "上午";
   } else if (startHour < 19) {
-    period = '下午';
+    period = "下午";
   } else {
-    period = '晚上';
+    period = "晚上";
   }
 
   // 格式化时间
   const formatTime = (date: Date) => {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   };
 
   const timeRange = `${formatTime(startDate)}-${formatTime(endDate)}`;
 
-  return `${dayLabel} ${period} ${timeRange}`;
+  return `${dayLabel}${period} ${timeRange} `;
 }

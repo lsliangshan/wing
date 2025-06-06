@@ -9,7 +9,7 @@
         ><span class="text-error">*</span>
         <span>班级</span>
       </label>
-      <div class="flex items-center gap-2 mb-4">
+      <div class="flex items-center gap-2">
         <select
           class="select w-full"
           :disabled="!!route.query.classId"
@@ -37,7 +37,7 @@
         </button>
       </div>
 
-      <label class="label"
+      <label class="label mt-4" v-if="formData.schedule.length > 0"
         ><span class="text-error">*</span> <span>上课时间</span></label
       >
       <div
@@ -126,6 +126,52 @@
 
       <label class="label mt-4"
         ><span class="text-error">*</span>
+        <span>提醒</span>
+      </label>
+      <div
+        class="flex items-center gap-2"
+        v-for="(reminder, index) in formData.reminders"
+        :key="index"
+      >
+        <div class="w-full h-8 flex flex-row items-center gap-2 pl-3 my-2">
+          <div class="w-15 h-full flex flex-row items-center">提前</div>
+          <div class="w-25 h-full">
+            <input
+              type="number"
+              class="input input-sm validator"
+              required
+              min="1"
+              :max="remindTime(reminder.unit)"
+              v-model="reminder.before"
+            />
+          </div>
+          <div class="w-25 h-full">
+            <select class="select select-sm" v-model="reminder.unit">
+              <option value="minute">分钟</option>
+              <option value="hour">小时</option>
+              <option value="day">天</option>
+              <option value="week">周</option>
+            </select>
+          </div>
+          <div
+            class="w-10 h-full flex flex-row items-center justify-center cursor-pointer"
+            @click="deleteReminder(index)"
+          >
+            <IconClose
+              color="var(--color-warning-content)"
+              width="12"
+              height="12"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-row items-center">
+        <button class="btn btn-sm btn-ghost" @click="addReminder">
+          添加提醒
+        </button>
+      </div>
+
+      <label class="label mt-4">
         <span>课件</span>
       </label>
       <div class="flex items-center gap-2 p-2 flex-wrap">
@@ -226,7 +272,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, type Ref, watch } from "vue";
+import { ref, onMounted, type Ref, watch, computed } from "vue";
 import IconAdd from "@/components/icons/IconAdd.vue";
 import IconMinus from "@/components/icons/IconMinus.vue";
 import IconUpload from "@/components/icons/IconUpload.vue";
@@ -255,10 +301,16 @@ interface ScheduleEntity {
   repeat: boolean;
 }
 
+interface ReminderEntity {
+  before: number;
+  unit: "minute" | "hour" | "day" | "week";
+}
+
 interface FormData {
   class: string;
   schedule: ScheduleEntity[];
   attachments: string[];
+  reminders: ReminderEntity[];
 }
 
 const toast = useToast();
@@ -308,6 +360,12 @@ const formData = ref<FormData>({
     },
   ],
   attachments: [],
+  reminders: [
+    {
+      before: 10,
+      unit: "minute",
+    },
+  ],
 });
 
 messageStore.onMessage((event) => {
@@ -328,13 +386,30 @@ messageStore.onMessage((event) => {
 watch(
   () => formData.value.class,
   (newVal) => {
-    console.log(">>>>> formData.value.class: ", newVal);
     getScheduleByClassId(newVal);
   },
   {
     immediate: true,
   }
 );
+
+const remindTime = computed(() => {
+  return function (unit: "minute" | "hour" | "day" | "week") {
+    if (unit === "minute") {
+      return 40320;
+    }
+    if (unit === "hour") {
+      return 672;
+    }
+    if (unit === "day") {
+      return 28;
+    }
+    if (unit === "week") {
+      return 4;
+    }
+    return 1;
+  };
+});
 
 onMounted(() => {
   getClasses();
@@ -376,54 +451,54 @@ async function getScheduleByClassId(classId: string) {
     formData.value.schedule = [];
     return;
   }
-  const r = [
-    {
-      row_number: 2,
-      id: "3d8b8bab-5fec-4b6c-941d-1d0257770562",
-      class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-      start: "1749213600000",
-      end: "1749216600000",
-      repeat: true,
-      attachments: [
-        "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
-        "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
-      ],
-    },
-    {
-      row_number: 3,
-      id: "ab7c93c3-c397-404e-96d8-5d763ec742cf",
-      class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-      start: "1749115295901",
-      end: "1749115295901",
-      repeat: true,
-      attachments: [
-        "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
-        "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
-      ],
-    },
-    {
-      row_number: 4,
-      id: "a27382f8-e38d-4927-939c-c6c2e65836cf",
-      class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-      start: "1749115393733",
-      end: "1749115393733",
-      repeat: false,
-      attachments: [
-        "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
-        "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
-      ],
-    },
-  ];
-  formData.value.schedule = r.map((item: any) => ({
-    start: new Date(Number(item.start)),
-    end: new Date(Number(item.end)),
-    repeat: item.repeat,
-  }));
-  ranges.value = [...formData.value.schedule].map((item) => [
-    item.start,
-    item.end,
-  ]);
-  return;
+  // const r = [
+  //   {
+  //     row_number: 2,
+  //     id: "3d8b8bab-5fec-4b6c-941d-1d0257770562",
+  //     class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
+  //     start: "1749213600000",
+  //     end: "1749216600000",
+  //     repeat: true,
+  //     attachments: [
+  //       "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
+  //       "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
+  //     ],
+  //   },
+  //   {
+  //     row_number: 3,
+  //     id: "ab7c93c3-c397-404e-96d8-5d763ec742cf",
+  //     class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
+  //     start: "1749115295901",
+  //     end: "1749115295901",
+  //     repeat: true,
+  //     attachments: [
+  //       "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
+  //       "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
+  //     ],
+  //   },
+  //   {
+  //     row_number: 4,
+  //     id: "a27382f8-e38d-4927-939c-c6c2e65836cf",
+  //     class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
+  //     start: "1749115393733",
+  //     end: "1749115393733",
+  //     repeat: false,
+  //     attachments: [
+  //       "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
+  //       "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
+  //     ],
+  //   },
+  // ];
+  // formData.value.schedule = r.map((item: any) => ({
+  //   start: new Date(Number(item.start)),
+  //   end: new Date(Number(item.end)),
+  //   repeat: item.repeat,
+  // }));
+  // ranges.value = [...formData.value.schedule].map((item) => [
+  //   item.start,
+  //   item.end,
+  // ]);
+  // return;
   await messageStore
     .getScheduleByClassId({
       classId,
@@ -431,8 +506,8 @@ async function getScheduleByClassId(classId: string) {
     .then((res: any) => {
       if (res.length > 0) {
         formData.value.schedule = res.map((item: any) => ({
-          start: new Date(item.start),
-          end: new Date(item.end),
+          start: new Date(Number(item.start)),
+          end: new Date(Number(item.end)),
           repeat: item.repeat,
         }));
         ranges.value = [...formData.value.schedule].map((item) => [
@@ -568,6 +643,17 @@ async function handleFileChange(e: Event) {
   }
 }
 
+function addReminder() {
+  formData.value.reminders.push({
+    before: 1,
+    unit: "day",
+  });
+}
+
+function deleteReminder(index: number) {
+  formData.value.reminders.splice(index, 1);
+}
+
 function createSchedule() {
   if (isCreatingSchedule.value) {
     return;
@@ -579,6 +665,10 @@ function createSchedule() {
     class: formData.value.class,
     schedule: [],
     attachments: [],
+    reminders: [...formData.value.reminders].map((item) => ({
+      before: item.before,
+      unit: item.unit,
+    })),
   };
 
   const schedules = [...formData.value.schedule].map((item) => ({
