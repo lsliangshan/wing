@@ -42,6 +42,7 @@ const elId = ref(nanoid());
 const isLogin = ref(false);
 
 const userInfo = ref<{
+  userId: string;
   mobile: string;
   nick: string;
   openId: string;
@@ -49,6 +50,7 @@ const userInfo = ref<{
   unionId: string;
   visitor: boolean;
 }>({
+  userId: "",
   mobile: "",
   nick: "",
   openId: "",

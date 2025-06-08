@@ -122,7 +122,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "GET",
           url: `https://wf.qyflows.com/webhook${
-            devEnv === "local" ? "-test" : ""
+            env === "local" ? "-test" : ""
           }/class/list`,
         },
       });
@@ -218,7 +218,7 @@ export const useMessageStore = defineStore("message", () => {
     id: string;
     mobile: string;
     name: string;
-    en_name: string;
+    enName: string;
     gender: string;
     type: string;
     nick?: string;
@@ -226,6 +226,7 @@ export const useMessageStore = defineStore("message", () => {
     stateCode?: string;
     visitor?: boolean;
     unionId?: string;
+    userId?: string;
   }) {
     return new Promise((resolve, reject) => {
       const id = nanoid();
@@ -295,6 +296,35 @@ export const useMessageStore = defineStore("message", () => {
     });
   }
 
+  function uploadFile(params: { file: File, type: string }) {
+    return new Promise((resolve, reject) => {
+      const id = nanoid();
+      
+      sharedWorker.value.port.postMessage({
+        type: EMessageType.request,
+        message: {
+          id,
+          method: "POST",
+          url: `https://wf.qyflows.com/webhook${
+            env === "local" ? "-test" : ""
+          }/upload`,
+          data: {
+            type: params.type || "image",
+            media: params.file,
+          },
+          headers: {
+            "content-type": "multipart/form-data",
+          },
+        },
+      });
+
+      promises[id] = {
+        resolve,
+        reject,
+      };
+    });
+  }
+
   return {
     sharedWorker,
     request,
@@ -307,5 +337,6 @@ export const useMessageStore = defineStore("message", () => {
     addTeacher,
     getTeachers,
     getDingDingUserInfo,
+    uploadFile,
   };
 });

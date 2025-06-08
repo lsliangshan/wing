@@ -31,7 +31,7 @@
           placeholder="请输入英文名"
           required
           ref="enNameRef"
-          v-model="formData.en_name"
+          v-model="formData.enName"
         />
       </div>
 
@@ -58,7 +58,7 @@
       <label class="label mt-4">
         <span>钉钉账号</span>
         <span class="text-[#30ACAC] font-bold"
-          >（{{ formData.name }} - {{ formData.en_name }}）</span
+          >（{{ formData.name }} - {{ formData.enName }}）</span
         >
       </label>
       <div class="mt-4 w-75 h-75 mx-auto">
@@ -97,6 +97,7 @@ const isAdding = ref(false);
 const userInfo = ref<{
   mobile: string;
   nick: string;
+  userId: string;
   openId: string;
   stateCode: string;
   unionId: string;
@@ -104,6 +105,7 @@ const userInfo = ref<{
 }>({
   mobile: "",
   nick: "",
+  userId: "",
   openId: "",
   stateCode: "",
   unionId: "",
@@ -113,7 +115,7 @@ const userInfo = ref<{
 const formData = ref({
   id: "",
   name: "",
-  en_name: "",
+  enName: "",
   gender: "女",
   type: "全职老师",
 });
@@ -122,7 +124,7 @@ function resetFormData() {
   formData.value = {
     id: "",
     name: "",
-    en_name: "",
+    enName: "",
     gender: "女",
     type: "全职老师",
   };
@@ -130,6 +132,7 @@ function resetFormData() {
   userInfo.value = {
     mobile: "",
     nick: "",
+    userId: "",
     openId: "",
     stateCode: "",
     unionId: "",
@@ -139,13 +142,14 @@ function resetFormData() {
 
 function handleLoginSuccess(info: any) {
   userInfo.value = { ...info };
-  formData.value.id = userInfo.value.unionId;
+  formData.value.id = userInfo.value.userId;
 }
 
 function handleLoginFail() {
   userInfo.value = {
     mobile: "",
     nick: "",
+    userId: "",
     openId: "",
     stateCode: "",
     unionId: "",
@@ -167,7 +171,7 @@ async function addTeacher() {
     return;
   }
 
-  if (!formData.value.en_name) {
+  if (!formData.value.enName) {
     enNameRef.value?.focus();
     return;
   }

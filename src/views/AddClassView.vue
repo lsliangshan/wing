@@ -36,9 +36,79 @@
             :key="teacher.id"
             :value="teacher.id"
           >
-            {{ teacher.name }} - {{ teacher.en_name }}
+            {{ teacher.name }} - {{ teacher.enName }}
           </option>
         </select>
+      </div>
+
+      <label class="label mt-4"
+        ><span class="text-error">*</span>
+        <span>群图标</span>
+      </label>
+      <div class="flex items-center gap-2">
+        <div
+          class="w-20 h-20 cursor-pointer flex flex-row items-center justify-center relative group/item"
+          v-if="selectedFile"
+        >
+          <div
+            class="w-full h-full rounded-lg bg-[white] border border-(--color-base-300) overflow-hidden flex items-center justify-center"
+          >
+            <img class="max-w-full max-h-full" :src="filePath" />
+
+            <Transition name="fade">
+              <div
+                class="absolute bottom-0 left-0 w-full h-full rounded-lg flex flex-row items-center justify-center bg-black/50"
+                v-if="isUploading"
+              >
+                <span
+                  class="loading loading-spinner loading-md text-(--color-base-100)"
+                ></span>
+              </div>
+            </Transition>
+
+            <Transition name="fade">
+              <div
+                class="absolute bottom-0 left-0 w-full h-full rounded-lg flex flex-row items-center justify-center bg-(--color-base-100)/90"
+                v-if="isUploadError"
+              >
+                <div
+                  class="glass px-2 py-1 text-orange-600 text-xs text-shadow-lg select-none"
+                >
+                  上传失败
+                </div>
+              </div>
+            </Transition>
+          </div>
+
+          <div
+            class="absolute w-4 h-4 right-[-8px] top-[-8px] bg-(--color-warning) shadow-md rounded-full flex items-center justify-center z-9 p-1 invisible group-hover/item:visible transition-opacity duration-300"
+            @click="handleRemoveFile"
+            v-if="selectedFile && !isUploading"
+          >
+            <IconClose
+              color="var(--color-warning-content)"
+              width="14"
+              height="14"
+            />
+          </div>
+        </div>
+        <div class="w-20 h-20">
+          <button
+            class="w-20 h-20 btn btn-sm tooltip tooltip-top relative"
+            data-tip="选择附件"
+            v-if="!selectedFile"
+          >
+            <IconUpload color="var(--color-base-content)" />
+
+            <input
+              type="file"
+              class="file-input file-input-ghost absolute w-full h-full opacity-0 p-0"
+              accept="image/*"
+              ref="fileInputRef"
+              @change="handleFileChange"
+            />
+          </button>
+        </div>
       </div>
 
       <button
@@ -60,14 +130,16 @@
 import { onMounted, ref } from "vue";
 import { useMessageStore } from "@/stores/message.store";
 import { useToast } from "vue-toastification";
+import IconClose from "@/components/icons/IconClose.vue";
+import IconUpload from "@/components/icons/IconUpload.vue";
 
 interface TeacherEntity {
   id: string;
   name: string;
-  en_name: string;
+  enName: string;
   gender: string;
   type: string;
-  created_at: string;
+  createdAt: string;
   status: string;
 }
 
@@ -80,10 +152,17 @@ const teachers = ref<TeacherEntity[]>([]);
 
 const formData = ref({
   name: "",
+  icon: "",
   teacherId: "",
   teacherName: "",
   teacherEnName: "",
 });
+
+const selectedFile = ref<File | undefined>();
+const filePath = ref<string>("");
+
+const isUploading = ref(false);
+const isUploadError = ref(false);
 
 onMounted(() => {
   getTeachers();
@@ -108,10 +187,61 @@ function getTeachers() {
 function resetFormData() {
   formData.value = {
     name: "",
+    icon: "",
     teacherId: "",
     teacherName: "",
     teacherEnName: "",
   };
+}
+
+function handleRemoveFile() {
+  selectedFile.value = undefined;
+  filePath.value = "";
+  isUploadError.value = false;
+  formData.value.icon = "";
+}
+
+function readFilePath(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const p = e.target!.result as string;
+      resolve(p);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleFileChange(e: any) {
+  const file = e.target.files[0];
+  if (file) {
+    // formData.value.icon = URL.createObjectURL(file);
+    selectedFile.value = file;
+    isUploading.value = true;
+    filePath.value = await readFilePath(file);
+
+    messageStore
+      .uploadFile({
+        file,
+        type: "image",
+      })
+      .then((res: any) => {
+        if (res.code === 200) {
+          isUploadError.value = false;
+          formData.value.icon = res.data.mediaId;
+        } else {
+          isUploadError.value = true;
+          toast.error(res.message);
+        }
+      })
+      .catch((err: any) => {
+        isUploadError.value = true;
+        toast.error(err.message);
+      })
+      .finally(() => {
+        isUploading.value = false;
+      });
+  }
 }
 
 async function addClass() {
@@ -145,7 +275,7 @@ async function addClass() {
     .addClass({
       ...formData.value,
       teacherName: teachers.value[teacherIndex].name,
-      teacherEnName: teachers.value[teacherIndex].en_name,
+      teacherEnName: teachers.value[teacherIndex].enName,
     })
     .then((res: any) => {
       if (res.code === 200) {

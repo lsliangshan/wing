@@ -89,9 +89,19 @@ async function requestHandler(message: any, port: MessagePort) {
         headers,
       });
     } else if (method.toLowerCase() === "post") {
-      response = await axios.post(url, data, {
-        headers,
-      });
+      if (headers && headers["content-type"] === "multipart/form-data") {
+        const fd = new FormData();
+        for (const key in data) {
+          fd.append(key, data[key]);
+        }
+        response = await axios.post(url, fd, {
+          headers,
+        });
+      } else {
+        response = await axios.post(url, data, {
+          headers,
+        });
+      }
     } else if (method.toLowerCase() === "put") {
       response = await axios.put(url, data, {
         headers,

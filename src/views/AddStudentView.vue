@@ -17,7 +17,7 @@
             :key="'class-' + `${cls.id}`"
             :value="cls.id"
           >
-            {{ cls.name }} - {{ cls.teacher }}
+            {{ cls.name }} - {{ cls.teacherName }} - {{ cls.teacherEnName }}
           </option>
         </select>
         <button
@@ -59,7 +59,7 @@
           placeholder="请输入英文名"
           required
           ref="enNameRef"
-          v-model="formData.en_name"
+          v-model="formData.enName"
         />
       </div>
 
@@ -112,7 +112,9 @@ interface ClassEntity {
   row_number?: number;
   id: string;
   name: string;
-  teacher?: string;
+  teacherId?: string;
+  teacherName?: string;
+  teacherEnName?: string;
   link?: string;
   assistant?: string;
 }
@@ -130,7 +132,7 @@ const classes = ref<ClassEntity[]>([]);
 
 const formData = ref({
   name: "",
-  en_name: "",
+  enName: "",
   gender: "女",
   birthday: "",
   classId: "",
@@ -148,7 +150,7 @@ onMounted(() => {
 function resetFormData() {
   formData.value = {
     name: "",
-    en_name: "",
+    enName: "",
     gender: "女",
     birthday: "",
     classId: "",
@@ -204,7 +206,7 @@ async function addTeacher() {
     return;
   }
 
-  if (!formData.value.en_name) {
+  if (!formData.value.enName) {
     enNameRef.value?.focus();
     return;
   }
