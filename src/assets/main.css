@@ -17,4 +17,17 @@
   margin-top: 2px!important;
 }
 
+.mx-datepicker {
+  width: 100%!important;
+  height: 40px!important;
+}
+
+.mx-input-wrapper {
+  width: 100%!important;
+  height: 100%!important;
+}
+
+.mx-input-wrapper input {
+  height: 100%!important;
+}
 

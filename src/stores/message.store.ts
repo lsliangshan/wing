@@ -12,7 +12,8 @@ import { formatTimeRange } from "@/utils/time";
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 10);
 
 export const useMessageStore = defineStore("message", () => {
-  const env: "local" | "prod" = "local";
+  const env: "local" | "prod" = "prod";
+  const devEnv = "local";
 
   const sharedWorker = ref(new SharedWorkerConstructor());
 
@@ -121,8 +122,35 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "GET",
           url: `https://wf.qyflows.com/webhook${
-            env === "local" ? "-test" : ""
+            devEnv === "local" ? "-test" : ""
           }/class/list`,
+        },
+      });
+
+      promises[id] = {
+        resolve,
+        reject,
+      };
+    });
+  }
+
+  function addClass(params: {
+    name: string;
+    teacherId: string;
+    teacherName: string;
+    teacherEnName: string;
+  }) {
+    return new Promise((resolve, reject) => {
+      const id = nanoid();
+      sharedWorker.value.port.postMessage({
+        type: EMessageType.request,
+        message: {
+          id,
+          method: "POST",
+          url: `https://wf.qyflows.com/webhook${
+            devEnv === "local" ? "-test" : ""
+          }/add-class`,
+          data: params,
         },
       });
 
@@ -187,10 +215,17 @@ export const useMessageStore = defineStore("message", () => {
   }
 
   function addTeacher(params: {
+    id: string;
+    mobile: string;
     name: string;
     en_name: string;
     gender: string;
     type: string;
+    nick?: string;
+    openId?: string;
+    stateCode?: string;
+    visitor?: boolean;
+    unionId?: string;
   }) {
     return new Promise((resolve, reject) => {
       const id = nanoid();
@@ -213,14 +248,64 @@ export const useMessageStore = defineStore("message", () => {
     });
   }
 
+  function getTeachers() {
+    return new Promise((resolve, reject) => {
+      const id = nanoid();
+      sharedWorker.value.port.postMessage({
+        type: EMessageType.request,
+        message: {
+          id,
+          method: "GET",
+          url: `https://wf.qyflows.com/webhook${
+            env === "local" ? "-test" : ""
+          }/get-teachers`,
+        },
+      });
+
+      promises[id] = {
+        resolve,
+        reject,
+      };
+    });
+  }
+
+  /**
+   * 获取用户token
+   * https://open.dingtalk.com/document/isvapp/obtain-user-token
+   * https://open.dingtalk.com/document/isvapp/tutorial-enabling-login-to-third-party-websites
+   */
+  function getDingDingUserInfo(params: { code: string }) {
+    return new Promise((resolve, reject) => {
+      const id = nanoid();
+      sharedWorker.value.port.postMessage({
+        type: EMessageType.request,
+        message: {
+          id,
+          method: "GET",
+          url: `https://wf.qyflows.com/webhook${
+            env === "local" ? "-test" : ""
+          }/getDingDingUserInfo?code=${params.code}`,
+        },
+      });
+
+      promises[id] = {
+        resolve,
+        reject,
+      };
+    });
+  }
+
   return {
     sharedWorker,
     request,
     onMessage,
     uploadFiles,
     getAllClass,
+    addClass,
     createSchedule,
     getScheduleByClassId,
     addTeacher,
+    getTeachers,
+    getDingDingUserInfo,
   };
 });

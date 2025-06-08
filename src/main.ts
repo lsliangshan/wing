@@ -21,7 +21,7 @@ app.use(router);
 const options: PluginOptions = {
   position: POSITION.TOP_CENTER,
   transition: "Vue-Toastification__fade",
-  timeout: 2000,
+  timeout: 3000,
   hideProgressBar: true,
   icon: false,
   closeButton: false,

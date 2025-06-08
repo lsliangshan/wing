@@ -55,8 +55,26 @@
         </select>
       </div>
 
-      <button class="btn btn-neutral mt-4" @click="addTeacher">
-        <span>添加</span>
+      <label class="label mt-4">
+        <span>钉钉账号</span>
+        <span class="text-[#30ACAC] font-bold"
+          >（{{ formData.name }} - {{ formData.en_name }}）</span
+        >
+      </label>
+      <div class="mt-4 w-75 h-75 mx-auto">
+        <LoginBox @success="handleLoginSuccess" @fail="handleLoginFail" />
+      </div>
+
+      <button
+        class="btn btn-neutral mt-4"
+        @click="addTeacher"
+        :disabled="isAdding"
+      >
+        <span
+          v-if="isAdding"
+          class="loading loading-spinner loading-xs text-(--color-base-content)"
+        ></span>
+        <span v-else>添加</span>
       </button>
     </fieldset>
   </div>
@@ -64,18 +82,86 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useMessageStore } from "@/stores/message.store";
+import { useToast } from "vue-toastification";
+import LoginBox from "@/components/LoginBox.vue";
+
+const messageStore = useMessageStore();
+const toast = useToast();
 
 const nameRef = ref<HTMLInputElement>();
 const enNameRef = ref<HTMLInputElement>();
 
+const isAdding = ref(false);
+
+const userInfo = ref<{
+  mobile: string;
+  nick: string;
+  openId: string;
+  stateCode: string;
+  unionId: string;
+  visitor: boolean;
+}>({
+  mobile: "",
+  nick: "",
+  openId: "",
+  stateCode: "",
+  unionId: "",
+  visitor: false,
+});
+
 const formData = ref({
+  id: "",
   name: "",
   en_name: "",
-  gender: "男",
+  gender: "女",
   type: "全职老师",
 });
 
-function addTeacher() {
+function resetFormData() {
+  formData.value = {
+    id: "",
+    name: "",
+    en_name: "",
+    gender: "女",
+    type: "全职老师",
+  };
+
+  userInfo.value = {
+    mobile: "",
+    nick: "",
+    openId: "",
+    stateCode: "",
+    unionId: "",
+    visitor: false,
+  };
+}
+
+function handleLoginSuccess(info: any) {
+  userInfo.value = { ...info };
+  formData.value.id = userInfo.value.unionId;
+}
+
+function handleLoginFail() {
+  userInfo.value = {
+    mobile: "",
+    nick: "",
+    openId: "",
+    stateCode: "",
+    unionId: "",
+    visitor: false,
+  };
+  formData.value.id = "";
+}
+
+async function addTeacher() {
+  if (isAdding.value) {
+    toast.error("请勿重复提交");
+    return;
+  }
+
+  isAdding.value = true;
+
   if (!formData.value.name) {
     nameRef.value?.focus();
     return;
@@ -86,6 +172,29 @@ function addTeacher() {
     return;
   }
 
-  messageStore.addTeacher(formData.value);
+  if (!formData.value.id) {
+    toast.error("请先扫码登录钉钉账号");
+    return;
+  }
+
+  await messageStore
+    .addTeacher({
+      ...formData.value,
+      ...userInfo.value,
+    })
+    .then((res: any) => {
+      if (res.code === 200) {
+        toast.success("添加成功");
+        resetFormData();
+      } else {
+        toast.error(res.message);
+      }
+    })
+    .catch((err: any) => {
+      toast.error(err.message);
+    })
+    .finally(() => {
+      isAdding.value = false;
+    });
 }
 </script>
