@@ -56,12 +56,14 @@
           />
         </div>
         <date-picker
-          v-model:value="ranges[index]"
+          v-model.range="ranges[index]"
           type="datetime"
           range
           placeholder="选择日期"
           class="w-full h-10 mr-2"
           :show-time-panel="showTimeRangePanels.includes(index)"
+          @close="closeTimeRangePanel(index)"
+          @update:value="dataChange($event, index)"
         >
           <template #icon-calendar></template>
           <template #icon-clear></template>
@@ -466,6 +468,7 @@ async function getScheduleByClassId(classId: string) {
       classId,
     })
     .then((res: any) => {
+      console.log(">>>>>>>>>", res);
       if (res.code == 200 && res.data) {
         if (res.data.list && res.data.list.length > 0) {
           formData.value.schedule = res.data.list.map((item: any) => ({
@@ -729,5 +732,18 @@ function createSchedule() {
         isCreatingSchedule.value = false;
       }, 500);
     });
+}
+
+function dataChange(value: Date[], index: number) {
+  ranges.value[index] = value;
+  formData.value.schedule[index].start = value[0];
+  formData.value.schedule[index].end = value[1];
+  if (!showTimeRangePanels.value.includes(index)) {
+    showTimeRangePanels.value.push(index);
+  }
+}
+
+function closeTimeRangePanel(index: number) {
+  showTimeRangePanels.value.splice(index, 1);
 }
 </script>
