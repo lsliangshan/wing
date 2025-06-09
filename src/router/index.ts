@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import ClassScheduleView from "../views/ClassScheduleView.vue";
+import AddScheduleView from "../views/AddScheduleView.vue";
 import AddTeacherView from "../views/AddTeacherView.vue";
 import AddClassView from "../views/AddClassView.vue";
 import AddStudentView from "../views/AddStudentView.vue";
@@ -11,12 +11,12 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: ClassScheduleView,
+      component: AddScheduleView,
     },
     {
-      path: "/class/schedule",
-      name: "class-schedule",
-      component: ClassScheduleView,
+      path: "/add-schedule",
+      name: "add-schedule",
+      component: AddScheduleView,
     },
     {
       path: "/add-teacher",

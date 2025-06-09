@@ -13,7 +13,7 @@
         <select
           class="select w-full"
           :disabled="!!route.query.classId"
-          v-model="formData.class"
+          v-model="formData.classId"
         >
           <option disabled selected>请选择一个班级</option>
           <option
@@ -21,13 +21,13 @@
             :key="'class-' + `${cls.id}`"
             :value="cls.id"
           >
-            {{ cls.name }} - {{ cls.teacher }}
+            {{ cls.name }} - {{ cls.teacherName }}
           </option>
         </select>
         <button
           class="flex cursor-pointer justify-center items-center w-10 h-10 tooltip tooltip-top"
           data-tip="重新加载班级"
-          @click="getClasses"
+          @click="() => getClasses()"
         >
           <IconReload :width="18" :height="18" v-if="!isLoadingClasses" />
           <span
@@ -290,7 +290,9 @@ interface ClassEntity {
   row_number?: number;
   id: string;
   name: string;
-  teacher?: string;
+  teacherName?: string;
+  teacherEnName?: string;
+  teacherId?: string;
   link?: string;
   assistant?: string;
 }
@@ -307,7 +309,7 @@ interface ReminderEntity {
 }
 
 interface FormData {
-  class: string;
+  classId: string;
   schedule: ScheduleEntity[];
   attachments: string[];
   reminders: ReminderEntity[];
@@ -351,7 +353,7 @@ const uploadedFiles: Ref<
 const ranges = ref<Date[][]>([]);
 
 const formData = ref<FormData>({
-  class: "",
+  classId: "",
   schedule: [
     {
       start: new Date(),
@@ -384,7 +386,7 @@ messageStore.onMessage((event) => {
 });
 
 watch(
-  () => formData.value.class,
+  () => formData.value.classId,
   (newVal) => {
     getScheduleByClassId(newVal);
   },
@@ -412,10 +414,10 @@ const remindTime = computed(() => {
 });
 
 onMounted(() => {
-  getClasses();
+  getClasses(true);
 
   if (route.query.classId) {
-    formData.value.class = route.query.classId as string;
+    formData.value.classId = route.query.classId as string;
   }
 
   ranges.value = [...formData.value.schedule].map((item) => [
@@ -424,19 +426,27 @@ onMounted(() => {
   ]);
 });
 
-async function getClasses() {
+async function getClasses(isInit: boolean = false) {
   if (isLoadingClasses.value) {
     return;
   }
   isLoadingClasses.value = true;
   await messageStore
     .getAllClass()
-    .then((res) => {
-      classes.value = res as ClassEntity[];
-      toast.success("班级获取成功");
+    .then((res: any) => {
+      if (res.code == 200 && res.data) {
+        if (res.data.list && res.data.list.length > 0) {
+          classes.value = res.data.list as ClassEntity[];
+          !isInit && toast.success("班级获取成功");
+        } else {
+          !isInit && toast.error("暂无班级");
+        }
+      } else {
+        !isInit && toast.error("班级获取失败");
+      }
     })
     .catch((e) => {
-      toast.error("班级获取失败");
+      !isInit && toast.error("班级获取失败");
     })
     .finally(() => {
       const t = setTimeout(() => {
@@ -451,74 +461,52 @@ async function getScheduleByClassId(classId: string) {
     formData.value.schedule = [];
     return;
   }
-  // const r = [
-  //   {
-  //     row_number: 2,
-  //     id: "3d8b8bab-5fec-4b6c-941d-1d0257770562",
-  //     class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-  //     start: "1749213600000",
-  //     end: "1749216600000",
-  //     repeat: true,
-  //     attachments: [
-  //       "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
-  //       "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
-  //     ],
-  //   },
-  //   {
-  //     row_number: 3,
-  //     id: "ab7c93c3-c397-404e-96d8-5d763ec742cf",
-  //     class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-  //     start: "1749115295901",
-  //     end: "1749115295901",
-  //     repeat: true,
-  //     attachments: [
-  //       "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
-  //       "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
-  //     ],
-  //   },
-  //   {
-  //     row_number: 4,
-  //     id: "a27382f8-e38d-4927-939c-c6c2e65836cf",
-  //     class: "93a76f40-05a9-45b9-9527-73f77fc0835c",
-  //     start: "1749115393733",
-  //     end: "1749115393733",
-  //     repeat: false,
-  //     attachments: [
-  //       "https://img.liangqy.com/tmp/bzkzhcitgui1vzyhqbdtzpgoo.json?FlwsrNJnChvb1CAVY6rvS3pIaKOl",
-  //       "https://img.liangqy.com/tmp/qvj6r2u7jyta3mptyc1kllgcp.json?Fl4U1KHyWhcyj5COGYVMoeFoxrW_",
-  //     ],
-  //   },
-  // ];
-  // formData.value.schedule = r.map((item: any) => ({
-  //   start: new Date(Number(item.start)),
-  //   end: new Date(Number(item.end)),
-  //   repeat: item.repeat,
-  // }));
-  // ranges.value = [...formData.value.schedule].map((item) => [
-  //   item.start,
-  //   item.end,
-  // ]);
-  // return;
   await messageStore
     .getScheduleByClassId({
       classId,
     })
     .then((res: any) => {
-      if (res.length > 0) {
-        formData.value.schedule = res.map((item: any) => ({
-          start: new Date(Number(item.start)),
-          end: new Date(Number(item.end)),
-          repeat: item.repeat,
-        }));
-        ranges.value = [...formData.value.schedule].map((item) => [
-          item.start,
-          item.end,
-        ]);
+      if (res.code == 200 && res.data) {
+        if (res.data.list && res.data.list.length > 0) {
+          formData.value.schedule = res.data.list.map((item: any) => ({
+            start: new Date(Number(item.start)),
+            end: new Date(Number(item.end)),
+            repeat: item.repeat,
+          }));
+          ranges.value = [...formData.value.schedule].map((item) => [
+            item.start,
+            item.end,
+          ]);
+        } else {
+          formData.value.schedule = [
+            {
+              start: new Date(),
+              end: new Date(),
+              repeat: true,
+            },
+          ];
+          ranges.value = [[new Date(), new Date()]];
+        }
+      } else {
+        formData.value.schedule = [
+          {
+            start: new Date(),
+            end: new Date(),
+            repeat: true,
+          },
+        ];
+        ranges.value = [[new Date(), new Date()]];
       }
-      console.log(">>>>> getScheduleByClassId Response: ", JSON.stringify(res));
     })
     .catch((err) => {
-      console.log(".....getScheduleByClassId error; ", err);
+      formData.value.schedule = [
+        {
+          start: new Date(),
+          end: new Date(),
+          repeat: true,
+        },
+      ];
+      ranges.value = [[new Date(), new Date()]];
     })
     .finally(() => {});
 }
@@ -654,15 +642,50 @@ function deleteReminder(index: number) {
   formData.value.reminders.splice(index, 1);
 }
 
+function resetData() {
+  formData.value = {
+    classId: "",
+    schedule: [
+      {
+        start: new Date(),
+        end: new Date(),
+        repeat: false,
+      },
+    ],
+    attachments: [],
+    reminders: [
+      {
+        before: 10,
+        unit: "minute",
+      },
+    ],
+  };
+  ranges.value = [[new Date(), new Date()]];
+}
 function createSchedule() {
   if (isCreatingSchedule.value) {
     return;
   }
 
+  if (!formData.value.classId) {
+    toast.warning("请选择一个班级");
+    return;
+  }
+
+  if (formData.value.schedule.length === 0) {
+    toast.error("请添加上课时间");
+    return;
+  }
+
+  // if (formData.value.attachments.length === 0) {
+  //   toast.error("请添加课件");
+  //   return;
+  // }
+
   isCreatingSchedule.value = true;
 
   let requestData: any = {
-    class: formData.value.class,
+    classId: formData.value.classId,
     schedule: [],
     attachments: [],
     reminders: [...formData.value.reminders].map((item) => ({
@@ -689,11 +712,16 @@ function createSchedule() {
     .createSchedule({
       data: { ...requestData },
     })
-    .then((res) => {
-      console.log(">>>>> createSchedule Response: ", res);
+    .then((res: any) => {
+      if (res.code == 200) {
+        resetData();
+        toast.success("创建成功");
+      } else {
+        toast.error("创建失败");
+      }
     })
     .catch((err) => {
-      console.log(".....create errror; ", err);
+      toast.error(err.message || "创建失败");
     })
     .finally(() => {
       const t = setTimeout(() => {
@@ -701,20 +729,5 @@ function createSchedule() {
         isCreatingSchedule.value = false;
       }, 500);
     });
-
-  // if (!formData.value.class) {
-  //   toast.warning("请选择一个班级");
-  //   return;
-  // }
-
-  // if (formData.value.schedule.length === 0) {
-  //   toast.error("请添加上课时间");
-  //   return;
-  // }
-
-  // if (formData.value.attachments.length === 0) {
-  //   toast.error("请添加课件");
-  //   return;
-  // }
 }
 </script>

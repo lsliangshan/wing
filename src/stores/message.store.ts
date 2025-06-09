@@ -148,7 +148,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "POST",
           url: `https://wf.qyflows.com/webhook${
-            devEnv === "local" ? "-test" : ""
+            env === "local" ? "-test" : ""
           }/add-class`,
           data: params,
         },
@@ -177,7 +177,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "POST",
           url: `https://wf.qyflows.com/webhook${
-            env === "local" ? "-test" : ""
+            devEnv === "local" ? "-test" : ""
           }/class/schedule`,
           data: {
             ...params.data,
@@ -202,7 +202,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "GET",
           url: `https://wf.qyflows.com/webhook${
-            env === "local" ? "-test" : ""
+            devEnv === "local" ? "-test" : ""
           }/class/schedule/list?classId=${params.classId}`,
         },
       });
@@ -296,10 +296,10 @@ export const useMessageStore = defineStore("message", () => {
     });
   }
 
-  function uploadFile(params: { file: File, type: string }) {
+  function uploadFile(params: { file: File; type: string }) {
     return new Promise((resolve, reject) => {
       const id = nanoid();
-      
+
       sharedWorker.value.port.postMessage({
         type: EMessageType.request,
         message: {
