@@ -1,5 +1,5 @@
 <template>
-  <div class="w-117 max-w-full mx-auto p-4">
+  <div class="w-137 max-w-full mx-auto p-4">
     <fieldset
       class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 box-border"
     >
@@ -37,11 +37,11 @@
         </button>
       </div>
 
-      <label class="label mt-4" v-if="formData.schedule.length > 0"
+      <label class="label mt-4 mb-2" v-if="formData.schedule.length > 0"
         ><span class="text-error">*</span> <span>上课时间</span></label
       >
       <div
-        class="w-full h-10 flex items-center"
+        class="w-full h-10 flex items-center flex-row gap-2"
         v-for="(schedule, index) in formData.schedule"
         :key="index"
       >
@@ -55,74 +55,49 @@
             class="checkbox checkbox-sm checked:border-orange-500 checked:bg-orange-400 checked:text-orange-800"
           />
         </div>
-        <date-picker
-          v-model.range="ranges[index]"
-          type="datetime"
-          range
-          placeholder="选择日期"
-          class="w-full h-10 mr-2"
-          :show-time-panel="showTimeRangePanels.includes(index)"
-          @close="closeTimeRangePanel(index)"
-          @update:value="dataChange($event, index)"
-        >
-          <template #icon-calendar></template>
-          <template #icon-clear></template>
-          <template #footer>
-            <button
-              class="mx-btn mx-btn-text"
-              @click="toggleTimeRangePanel(index)"
-            >
-              {{
-                showTimeRangePanels.includes(index) ? "选择日期" : "选择时间"
-              }}
-            </button>
-          </template>
-          <template #input>
-            <div
-              class="flex w-full rounded-sm border-l-0 rounded-l-none border border-gray-300 dark:border-gray-600 overflow-hidden h-10"
-            >
-              <div class="h-full px-2 py-1 flex items-center dark:bg-gray-700">
-                {{
-                  ranges[index]
-                    ? formatDateForSchedule({
-                        date: ranges[index][0].toLocaleString(),
-                        format: schedule.repeat
-                          ? "weekday dayPeriod hour:minute"
-                          : "YYYY-MM-DD hh:mm",
-                      })
-                    : ""
-                }}
-                <span class="mx-2 font-bold">至</span>
-                {{
-                  ranges[index]
-                    ? formatDateForSchedule({
-                        date: ranges[index][1].toLocaleString(),
-                        format: schedule.repeat
-                          ? "weekday dayPeriod hour:minute"
-                          : "YYYY-MM-DD hh:mm",
-                      })
-                    : ""
-                }}
-              </div>
-            </div>
-          </template>
-        </date-picker>
+        <div class="w-40">
+          <el-date-picker
+            v-model="schedule.date"
+            type="date"
+            size="large"
+            :format="schedule.repeat ? 'ddd' : 'YYYY-MM-DD'"
+            placeholder="选择日期"
+            style="width: 100%"
+          >
+          </el-date-picker>
+        </div>
+        <div class="w-54">
+          <el-time-picker
+            v-model="schedule.range"
+            is-range
+            format="HH:mm"
+            size="large"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            style="width: 100%"
+            @change="dataTimeChange($event, index)"
+          />
+        </div>
         <button
           class="cursor-pointer flex justify-center items-center w-10 h-10 tooltip tooltip-top"
           data-tip="删除上课时间"
           v-if="formData.schedule.length > 1"
           @click="deleteSchedule(index)"
         >
-          <IconMinus color="#ff3333" :width="24" :height="24" />
+          <IconClose
+            color="var(--color-warning-content)"
+            :width="12"
+            :height="12"
+          />
         </button>
-
-        <button
-          class="flex cursor-pointer justify-center items-center w-10 h-10 tooltip tooltip-top"
-          data-tip="添加上课时间"
-          v-if="index === formData.schedule.length - 1"
-          @click="addSchedule"
-        >
-          <IconAdd color="#009933" :width="24" :height="24" />
+      </div>
+      <div
+        class="flex flex-row items-center"
+        v-if="formData.schedule.length > 0"
+      >
+        <button class="btn btn-sm text-[#009933]" @click="addSchedule">
+          添加上课时间
         </button>
       </div>
 
@@ -156,7 +131,8 @@
             </select>
           </div>
           <div
-            class="w-10 h-full flex flex-row items-center justify-center cursor-pointer"
+            class="w-10 h-full flex flex-row items-center justify-center cursor-pointer tooltip tooltip-top"
+            data-tip="删除提醒"
             @click="deleteReminder(index)"
           >
             <IconClose
@@ -168,7 +144,7 @@
         </div>
       </div>
       <div class="flex flex-row items-center">
-        <button class="btn btn-sm btn-ghost" @click="addReminder">
+        <button class="btn btn-sm text-[#009933]" @click="addReminder">
           添加提醒
         </button>
       </div>
@@ -275,18 +251,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, type Ref, watch, computed } from "vue";
-import IconAdd from "@/components/icons/IconAdd.vue";
-import IconMinus from "@/components/icons/IconMinus.vue";
 import IconUpload from "@/components/icons/IconUpload.vue";
 import IconClose from "@/components/icons/IconClose.vue";
 import IconFile from "@/components/icons/IconFile.vue";
-import { formatDateForSchedule } from "@/utils/time";
-import DatePicker from "vue-datepicker-next";
 import { useMessageStore } from "@/stores/message.store";
 import IconReload from "@/components/icons/IconReload.vue";
 import { useToast } from "vue-toastification";
 import { EMessageType } from "@/types";
 import { useRoute } from "vue-router";
+import { ElDatePicker } from "element-plus";
 
 interface ClassEntity {
   row_number?: number;
@@ -300,8 +273,8 @@ interface ClassEntity {
 }
 
 interface ScheduleEntity {
-  start: Date;
-  end: Date;
+  date: Date;
+  range: Date[];
   repeat: boolean;
 }
 
@@ -331,8 +304,6 @@ const isUploadingFiles = ref(false);
 
 const isCreatingSchedule = ref(false);
 
-const showTimeRangePanels = ref<number[]>([]);
-
 const fileInputRef = ref();
 
 const selectedFiles: Ref<{ path: string; [key: string]: any }[]> = ref([]);
@@ -352,15 +323,13 @@ const uploadedFiles: Ref<
   }[]
 > = ref([]);
 
-const ranges = ref<Date[][]>([]);
-
 const formData = ref<FormData>({
   classId: "",
   schedule: [
     {
-      start: new Date(),
-      end: new Date(),
-      repeat: false,
+      date: new Date(),
+      range: [new Date(), new Date()],
+      repeat: true,
     },
   ],
   attachments: [],
@@ -422,11 +391,24 @@ onMounted(() => {
     formData.value.classId = route.query.classId as string;
   }
 
-  ranges.value = [...formData.value.schedule].map((item) => [
-    item.start,
-    item.end,
-  ]);
+  formatRanges();
 });
+
+function dataTimeChange(value: Date[], index: number) {
+  console.log(">>>>>>>>>", value, index);
+  // ranges.value[index] = value;
+  // formData.value.schedule[index].start = value[0];
+  // formData.value.schedule[index].end = value[1];
+  // if (!showTimeRangePanels.value.includes(index)) {
+  //   showTimeRangePanels.value.push(index);
+  // }
+}
+function formatRanges() {
+  // ranges.value = [...formData.value.schedule].map((item) => ({
+  //   date: item.start,
+  //   range: [item.start, item.end],
+  // }));
+}
 
 async function getClasses(isInit: boolean = false) {
   if (isLoadingClasses.value) {
@@ -468,75 +450,54 @@ async function getScheduleByClassId(classId: string) {
       classId,
     })
     .then((res: any) => {
-      console.log(">>>>>>>>>", res);
       if (res.code == 200 && res.data) {
         if (res.data.list && res.data.list.length > 0) {
           formData.value.schedule = res.data.list.map((item: any) => ({
-            start: new Date(Number(item.start)),
-            end: new Date(Number(item.end)),
+            date: new Date(item.start),
+            range: [new Date(item.start), new Date(item.end)],
             repeat: item.repeat,
           }));
-          ranges.value = [...formData.value.schedule].map((item) => [
-            item.start,
-            item.end,
-          ]);
         } else {
           formData.value.schedule = [
             {
-              start: new Date(),
-              end: new Date(),
+              date: new Date(),
+              range: [new Date(), new Date()],
               repeat: true,
             },
           ];
-          ranges.value = [[new Date(), new Date()]];
         }
       } else {
         formData.value.schedule = [
           {
-            start: new Date(),
-            end: new Date(),
+            date: new Date(),
+            range: [new Date(), new Date()],
             repeat: true,
           },
         ];
-        ranges.value = [[new Date(), new Date()]];
       }
     })
     .catch((err) => {
       formData.value.schedule = [
         {
-          start: new Date(),
-          end: new Date(),
+          date: new Date(),
+          range: [new Date(), new Date()],
           repeat: true,
         },
       ];
-      ranges.value = [[new Date(), new Date()]];
     })
     .finally(() => {});
 }
 
 function addSchedule() {
   formData.value.schedule.push({
-    start: new Date(),
-    end: new Date(),
+    date: new Date(),
+    range: [new Date(), new Date()],
     repeat: true,
   });
-  ranges.value = [...formData.value.schedule].map((item) => [
-    item.start,
-    item.end,
-  ]);
 }
 
 function deleteSchedule(index: number) {
   formData.value.schedule.splice(index, 1);
-}
-
-function toggleTimeRangePanel(index: number) {
-  const idx = showTimeRangePanels.value.indexOf(index);
-  if (idx === -1) {
-    showTimeRangePanels.value.push(index);
-  } else {
-    showTimeRangePanels.value.splice(idx, 1);
-  }
 }
 
 function readFilePath(file: File): Promise<string> {
@@ -650,8 +611,8 @@ function resetData() {
     classId: "",
     schedule: [
       {
-        start: new Date(),
-        end: new Date(),
+        date: new Date(),
+        range: [new Date(), new Date()],
         repeat: false,
       },
     ],
@@ -663,8 +624,8 @@ function resetData() {
       },
     ],
   };
-  ranges.value = [[new Date(), new Date()]];
 }
+
 function createSchedule() {
   if (isCreatingSchedule.value) {
     return;
@@ -697,27 +658,26 @@ function createSchedule() {
     })),
   };
 
-  const schedules = [...formData.value.schedule].map((item) => ({
-    start: new Date(item.start).getTime(),
-    end: new Date(item.end).getTime(),
-    repeat: item.repeat,
-  }));
-
-  requestData.schedule = schedules;
-
   requestData.attachments = uploadedFiles.value.map((f) => ({
     url: f.url,
     name: f.filename,
     type: f.type,
     size: f.size,
   }));
+
+  requestData.schedule = formData.value.schedule.map((item) => ({
+    start: item.range[0],
+    end: item.range[1],
+    repeat: item.repeat,
+  }));
+
   messageStore
     .createSchedule({
       data: { ...requestData },
     })
     .then((res: any) => {
       if (res.code == 200) {
-        resetData();
+        // resetData();
         toast.success("创建成功");
       } else {
         toast.error("创建失败");
@@ -732,18 +692,5 @@ function createSchedule() {
         isCreatingSchedule.value = false;
       }, 500);
     });
-}
-
-function dataChange(value: Date[], index: number) {
-  ranges.value[index] = value;
-  formData.value.schedule[index].start = value[0];
-  formData.value.schedule[index].end = value[1];
-  if (!showTimeRangePanels.value.includes(index)) {
-    showTimeRangePanels.value.push(index);
-  }
-}
-
-function closeTimeRangePanel(index: number) {
-  showTimeRangePanels.value.splice(index, 1);
 }
 </script>

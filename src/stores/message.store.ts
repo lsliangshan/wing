@@ -177,7 +177,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "POST",
           url: `https://wf.qyflows.com/webhook${
-            env === "local" ? "-test" : ""
+            devEnv === "local" ? "-test" : ""
           }/class/schedule`,
           data: {
             ...params.data,
@@ -202,7 +202,7 @@ export const useMessageStore = defineStore("message", () => {
           id,
           method: "GET",
           url: `https://wf.qyflows.com/webhook${
-            devEnv === "local" ? "-test" : ""
+            env === "local" ? "-test" : ""
           }/class/schedule/list?classId=${params.classId}`,
         },
       });
