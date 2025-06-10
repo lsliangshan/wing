@@ -395,6 +395,14 @@ onMounted(() => {
 });
 
 function dataTimeChange(value: Date[], index: number) {
+  const date = formData.value.schedule[index].date;
+
+  formData.value.schedule[index].range = value.map((item) => {
+    const h = item.getHours();
+    const m = item.getMinutes();
+
+    return new Date(date.setHours(h, m, 0, 0));
+  });
   console.log(">>>>>>>>>", value, index);
   // ranges.value[index] = value;
   // formData.value.schedule[index].start = value[0];
