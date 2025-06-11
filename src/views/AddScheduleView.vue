@@ -161,6 +161,42 @@
         </button>
       </div>
 
+      <label class="label mt-4"
+        ><span class="text-error">*</span>
+        <span>通知标题</span>
+      </label>
+      <div class="w-full h-10 flex items-center flex-row gap-2 mt-2">
+        <input
+          type="text"
+          class="input input-bordered w-full validator"
+          placeholder="请输入通知标题"
+          required
+          ref="titleRef"
+          v-model="formData.title"
+        />
+      </div>
+
+      <label class="label mt-4"
+        ><span class="text-error">*</span>
+        <span>通知内容</span>
+
+        <div
+          class="btn btn-sm btn-ghost"
+          @click="insertAtCursor('\{\{date\}\}')"
+        >
+          插入时间
+        </div>
+      </label>
+      <div class="w-full flex items-center flex-row gap-2 mt-2">
+        <textarea
+          class="textarea textarea-bordered w-full validator"
+          placeholder="请输入通知内容"
+          required
+          ref="contentRef"
+          v-model="formData.content"
+        />
+      </div>
+
       <label class="label mt-4">
         <span>课件</span>
       </label>
@@ -300,6 +336,10 @@ interface FormData {
   schedule: ScheduleEntity[];
   attachments: string[];
   reminders: ReminderEntity[];
+  // 通知标题
+  title: string;
+  // 通知内容
+  content: string;
 }
 
 const toast = useToast();
@@ -319,6 +359,8 @@ const isCreatingSchedule = ref(false);
 const isLoadingClassSchedulesAndReminders = ref(false);
 
 const fileInputRef = ref();
+
+const contentRef = ref();
 
 const selectedFiles: Ref<{ path: string; [key: string]: any }[]> = ref([]);
 
@@ -353,6 +395,8 @@ const formData = ref<FormData>({
     //   unit: "minute",
     // },
   ],
+  title: "",
+  content: "",
 });
 
 messageStore.onMessage((event) => {
@@ -407,6 +451,23 @@ onMounted(() => {
 
   formatRanges();
 });
+
+function insertAtCursor(text: string) {
+  // 读出光标或选区起止位置
+  const start = contentRef.value.selectionStart; // 光标起点
+  const end = contentRef.value.selectionEnd;
+
+  // 组装插入后的最终内容
+  contentRef.value.value =
+    contentRef.value.value.slice(0, start) +
+    text +
+    contentRef.value.value.slice(end);
+
+  // 将光标移到插入文本之后，体验更友好
+  const pos = start + text.length;
+  contentRef.value.selectionStart = contentRef.value.selectionEnd = pos;
+  contentRef.value.focus(); // 让用户继续输入
+}
 
 function dataTimeChange(value: Date[], index: number) {
   const date = formData.value.schedule[index].date;
@@ -640,25 +701,25 @@ function deleteReminder(index: number) {
   formData.value.reminders.splice(index, 1);
 }
 
-function resetData() {
-  formData.value = {
-    classId: "",
-    schedule: [
-      {
-        date: new Date(),
-        range: [new Date(), new Date()],
-        repeat: false,
-      },
-    ],
-    attachments: [],
-    reminders: [
-      {
-        before: 10,
-        unit: "minute",
-      },
-    ],
-  };
-}
+// function resetData() {
+//   formData.value = {
+//     classId: "",
+//     schedule: [
+//       {
+//         date: new Date(),
+//         range: [new Date(), new Date()],
+//         repeat: false,
+//       },
+//     ],
+//     attachments: [],
+//     reminders: [
+//       {
+//         before: 10,
+//         unit: "minute",
+//       },
+//     ],
+//   };
+// }
 
 function createSchedule() {
   if (isCreatingSchedule.value) {
