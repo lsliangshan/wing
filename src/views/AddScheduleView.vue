@@ -37,6 +37,15 @@
         </button>
       </div>
 
+      <div
+        class="w-full h-10 mt-4 flex items-center flex-row justify-center"
+        v-if="isLoadingClassSchedulesAndReminders"
+      >
+        <span
+          class="loading loading-spinner loading-xs text-(--color-base-content)"
+        ></span>
+      </div>
+
       <label class="label mt-4 mb-2" v-if="formData.schedule.length > 0"
         ><span class="text-error">*</span> <span>上课时间</span></label
       >
@@ -101,7 +110,7 @@
         </button>
       </div>
 
-      <label class="label mt-4"
+      <label class="label mt-4" v-if="formData.reminders.length > 0"
         ><span class="text-error">*</span>
         <span>提醒</span>
       </label>
@@ -143,7 +152,10 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-row items-center">
+      <div
+        class="flex flex-row items-center"
+        v-if="formData.reminders.length < 5 && formData.reminders.length > 0"
+      >
         <button class="btn btn-sm text-[#009933]" @click="addReminder">
           添加提醒
         </button>
@@ -304,6 +316,8 @@ const isUploadingFiles = ref(false);
 
 const isCreatingSchedule = ref(false);
 
+const isLoadingClassSchedulesAndReminders = ref(false);
+
 const fileInputRef = ref();
 
 const selectedFiles: Ref<{ path: string; [key: string]: any }[]> = ref([]);
@@ -328,16 +342,16 @@ const formData = ref<FormData>({
   schedule: [
     {
       date: new Date(),
-      range: [new Date(), new Date()],
+      range: [new Date(), new Date(new Date().setHours(23, 59, 59, 999))],
       repeat: true,
     },
   ],
   attachments: [],
   reminders: [
-    {
-      before: 10,
-      unit: "minute",
-    },
+    // {
+    //   before: 10,
+    //   unit: "minute",
+    // },
   ],
 });
 
@@ -453,6 +467,7 @@ async function getScheduleByClassId(classId: string) {
     formData.value.schedule = [];
     return;
   }
+  isLoadingClassSchedulesAndReminders.value = true;
   await messageStore
     .getScheduleByClassId({
       classId,
@@ -463,8 +478,17 @@ async function getScheduleByClassId(classId: string) {
           formData.value.schedule = res.data.list.map((item: any) => ({
             date: new Date(item.start),
             range: [new Date(item.start), new Date(item.end)],
-            repeat: item.repeat,
+            repeat: item.repeat == "是",
           }));
+
+          const reminders = res.data.list[0].reminders
+            .split(";")
+            .map((item: string) => ({
+              before: Number(item.split("-")[0]),
+              unit: item.split("-")[1],
+            }));
+
+          formData.value.reminders = reminders;
         } else {
           formData.value.schedule = [
             {
@@ -493,7 +517,9 @@ async function getScheduleByClassId(classId: string) {
         },
       ];
     })
-    .finally(() => {});
+    .finally(() => {
+      isLoadingClassSchedulesAndReminders.value = false;
+    });
 }
 
 function addSchedule() {
