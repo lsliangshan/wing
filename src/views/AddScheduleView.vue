@@ -72,6 +72,7 @@
             :format="schedule.repeat ? 'ddd' : 'YYYY-MM-DD'"
             placeholder="选择日期"
             style="width: 100%"
+            @change="dataChange($event, index)"
           >
           </el-date-picker>
         </div>
@@ -161,41 +162,40 @@
         </button>
       </div>
 
-      <label class="label mt-4"
-        ><span class="text-error">*</span>
-        <span>通知标题</span>
-      </label>
-      <div class="w-full h-10 flex items-center flex-row gap-2 mt-2">
-        <input
-          type="text"
-          class="input input-bordered w-full validator"
-          placeholder="请输入通知标题"
-          required
-          ref="titleRef"
-          v-model="formData.title"
-        />
-      </div>
-
-      <label class="label mt-4"
-        ><span class="text-error">*</span>
-        <span>通知内容</span>
-
-        <div
-          class="btn btn-sm btn-ghost"
-          @click="insertAtCursor('\{\{date\}\}')"
-        >
-          插入时间
+      <template v-if="formData.classId && !isLoadingClassSchedulesAndReminders">
+        <label class="label mt-4"
+          ><span class="text-error">*</span>
+          <span>通知标题</span>
+        </label>
+        <div class="w-full h-10 flex items-center flex-row gap-2 mt-2">
+          <input
+            type="text"
+            class="input input-bordered w-full validator"
+            placeholder="请输入通知标题"
+            required
+            ref="titleRef"
+            v-model="formData.title"
+          />
         </div>
-      </label>
-      <div class="w-full flex items-center flex-row gap-2 mt-2">
-        <textarea
-          class="textarea textarea-bordered w-full validator"
-          placeholder="请输入通知内容"
-          required
-          ref="contentRef"
-          v-model="formData.content"
-        />
-      </div>
+
+        <label class="label mt-4"
+          ><span class="text-error">*</span>
+          <span>通知内容</span>
+
+          <div class="btn btn-sm btn-ghost" @click="insertAtCursor('[时间]')">
+            插入时间
+          </div>
+        </label>
+        <div class="w-full flex items-center flex-row gap-2 mt-2">
+          <textarea
+            class="textarea textarea-bordered w-full validator"
+            placeholder="请输入通知内容"
+            required
+            ref="contentRef"
+            v-model="formData.content"
+          />
+        </div>
+      </template>
 
       <label class="label mt-4">
         <span>课件</span>
@@ -448,8 +448,6 @@ onMounted(() => {
   if (route.query.classId) {
     formData.value.classId = route.query.classId as string;
   }
-
-  formatRanges();
 });
 
 function insertAtCursor(text: string) {
@@ -467,6 +465,8 @@ function insertAtCursor(text: string) {
   const pos = start + text.length;
   contentRef.value.selectionStart = contentRef.value.selectionEnd = pos;
   contentRef.value.focus(); // 让用户继续输入
+
+  formData.value.content = contentRef.value.value;
 }
 
 function dataTimeChange(value: Date[], index: number) {
@@ -478,19 +478,16 @@ function dataTimeChange(value: Date[], index: number) {
 
     return new Date(date.setHours(h, m, 0, 0));
   });
-  console.log(">>>>>>>>>", value, index);
-  // ranges.value[index] = value;
-  // formData.value.schedule[index].start = value[0];
-  // formData.value.schedule[index].end = value[1];
-  // if (!showTimeRangePanels.value.includes(index)) {
-  //   showTimeRangePanels.value.push(index);
-  // }
 }
-function formatRanges() {
-  // ranges.value = [...formData.value.schedule].map((item) => ({
-  //   date: item.start,
-  //   range: [item.start, item.end],
-  // }));
+function dataChange(value: Date, index: number) {
+  formData.value.schedule[index].date = value;
+
+  formData.value.schedule[index].range.map((item) => {
+    const h = item.getHours();
+    const m = item.getMinutes();
+
+    return new Date(value.setHours(h, m, 0, 0));
+  });
 }
 
 async function getClasses(isInit: boolean = false) {
@@ -536,6 +533,8 @@ async function getScheduleByClassId(classId: string) {
     .then((res: any) => {
       if (res.code == 200 && res.data) {
         if (res.data.list && res.data.list.length > 0) {
+          formData.value.title = res.data.list[0].title;
+          formData.value.content = res.data.list[0].content;
           formData.value.schedule = res.data.list.map((item: any) => ({
             date: new Date(item.start),
             range: [new Date(item.start), new Date(item.end)],
@@ -745,6 +744,8 @@ function createSchedule() {
 
   let requestData: any = {
     classId: formData.value.classId,
+    title: formData.value.title,
+    content: formData.value.content,
     schedule: [],
     attachments: [],
     reminders: [...formData.value.reminders].map((item) => ({

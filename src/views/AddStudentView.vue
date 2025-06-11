@@ -77,13 +77,22 @@
         <span>生日</span>
       </label>
       <div class="flex items-center gap-2">
-        <date-picker
+        <!-- <date-picker
           v-model:value="formData.birthday"
           type="date"
           placeholder="选择日期"
           class="w-full h-10"
         >
-        </date-picker>
+        </date-picker> -->
+        <el-date-picker
+          v-model="formData.birthday"
+          type="date"
+          size="large"
+          format="YYYY-MM-DD"
+          placeholder="选择日期"
+          style="width: 100%"
+        >
+        </el-date-picker>
       </div>
 
       <button
@@ -102,11 +111,11 @@
 </template>
 
 <script setup lang="ts">
-import DatePicker from "vue-datepicker-next";
 import { onMounted, ref } from "vue";
 import { useMessageStore } from "@/stores/message.store";
 import { useToast } from "vue-toastification";
 import IconReload from "@/components/icons/IconReload.vue";
+import { ElDatePicker } from "element-plus";
 
 interface ClassEntity {
   row_number?: number;
