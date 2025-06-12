@@ -80,7 +80,7 @@ function initLoginQrcode() {
       height: 300,
     },
     {
-      redirect_uri: encodeURIComponent("http://192.168.1.11:5173/login"),
+      redirect_uri: encodeURIComponent("http://10.2.6.210:5173/login"),
       client_id: "dingkbjfwewqmbaiz9uj",
       scope: "openid",
       response_type: "code",
@@ -88,6 +88,7 @@ function initLoginQrcode() {
     },
     async (loginResult: any) => {
       const { authCode } = loginResult;
+      console.log(">>>>>> loginResult", loginResult);
       isLogin.value = true;
       messageStore.getDingDingUserInfo({ code: authCode }).then((res: any) => {
         if (res.code == 200) {

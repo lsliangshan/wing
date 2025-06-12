@@ -557,6 +557,12 @@ async function getScheduleByClassId(classId: string) {
               repeat: true,
             },
           ];
+          formData.value.reminders = [
+            {
+              before: 30,
+              unit: "minute",
+            },
+          ];
         }
       } else {
         formData.value.schedule = [
@@ -564,6 +570,12 @@ async function getScheduleByClassId(classId: string) {
             date: new Date(),
             range: [new Date(), new Date()],
             repeat: true,
+          },
+        ];
+        formData.value.reminders = [
+          {
+            before: 30,
+            unit: "minute",
           },
         ];
       }
@@ -574,6 +586,12 @@ async function getScheduleByClassId(classId: string) {
           date: new Date(),
           range: [new Date(), new Date()],
           repeat: true,
+        },
+      ];
+      formData.value.reminders = [
+        {
+          before: 30,
+          unit: "minute",
         },
       ];
     })
