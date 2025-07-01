@@ -88,9 +88,10 @@ function initLoginQrcode() {
     },
     async (loginResult: any) => {
       const { authCode } = loginResult;
-      console.log(">>>>>> loginResult", loginResult);
+
       isLogin.value = true;
       messageStore.getDingDingUserInfo({ code: authCode }).then((res: any) => {
+        console.log(">>>>>> res", res);
         if (res.code == 200) {
           // 获取用户信息成功
           userInfo.value = res.data;

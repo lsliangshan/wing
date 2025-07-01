@@ -97,3 +97,51 @@ export function formatTimeRange(start: number, end: number): string {
 
   return `${dayLabel}${period} ${timeRange} `;
 }
+
+export function getDayOfWeek(
+  date: number
+):
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday" {
+  const day = new Date(date).getDay();
+  let d:
+    | "monday"
+    | "tuesday"
+    | "wednesday"
+    | "thursday"
+    | "friday"
+    | "saturday"
+    | "sunday" = "monday";
+  switch (day) {
+    case 0:
+      d = "sunday";
+      break;
+    case 1:
+      d = "monday";
+      break;
+    case 2:
+      d = "tuesday";
+      break;
+    case 3:
+      d = "wednesday";
+      break;
+    case 4:
+      d = "thursday";
+      break;
+    case 5:
+      d = "friday";
+      break;
+    case 6:
+      d = "saturday";
+      break;
+    default:
+      d = "monday";
+      break;
+  }
+  return d;
+}

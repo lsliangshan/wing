@@ -168,16 +168,19 @@ async function addTeacher() {
 
   if (!formData.value.name) {
     nameRef.value?.focus();
+    isAdding.value = false;
     return;
   }
 
   if (!formData.value.enName) {
     enNameRef.value?.focus();
+    isAdding.value = false;
     return;
   }
 
   if (!formData.value.id) {
     toast.error("请先扫码登录钉钉账号");
+    isAdding.value = false;
     return;
   }
 
@@ -192,10 +195,12 @@ async function addTeacher() {
         resetFormData();
       } else {
         toast.error(res.message);
+        isAdding.value = false;
       }
     })
     .catch((err: any) => {
       toast.error(err.message);
+      isAdding.value = false;
     })
     .finally(() => {
       isAdding.value = false;

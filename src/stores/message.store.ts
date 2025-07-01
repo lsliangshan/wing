@@ -121,7 +121,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "GET",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/class/list`,
         },
@@ -147,7 +147,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "POST",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/add-class`,
           data: params,
@@ -176,7 +176,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "POST",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/class/schedule`,
           data: {
@@ -201,9 +201,9 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "GET",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
-          }/class/schedule/list?classId=${params.classId}`,
+          }/get-schedule-by-classId?classId=${params.classId}`,
         },
       });
 
@@ -235,7 +235,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "POST",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/add-teacher`,
           data: params,
@@ -257,7 +257,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "GET",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/get-teachers`,
         },
@@ -283,7 +283,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "GET",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/getDingDingUserInfo?code=${params.code}`,
         },
@@ -305,7 +305,7 @@ export const useMessageStore = defineStore("message", () => {
         message: {
           id,
           method: "POST",
-          url: `https://wf.qyflows.com/webhook${
+          url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
           }/upload`,
           data: {

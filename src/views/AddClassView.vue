@@ -172,7 +172,6 @@ function getTeachers() {
   messageStore
     .getTeachers()
     .then((res: any) => {
-      console.log("getTeachers response: ", res);
       if (res.code === 200 && res.data && res.data.list) {
         teachers.value = res.data.list || [];
       } else {

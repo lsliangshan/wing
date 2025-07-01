@@ -197,6 +197,91 @@
         </div>
       </template>
 
+      <label class="label mt-4">
+        <span>课件</span>
+      </label>
+      <div class="flex items-center gap-2 p-2 flex-wrap">
+        <div
+          class="w-20 h-20 cursor-pointer flex flex-row items-center justify-center relative group/item tooltip tooltip-top"
+          v-for="f in selectedFiles"
+          :key="f.path"
+          :data-tip="f.name"
+        >
+          <div
+            class="w-full h-full rounded-lg bg-[white] border border-(--color-base-300) overflow-hidden flex items-center justify-center"
+          >
+            <img
+              class="max-w-full max-h-full"
+              :src="f.path"
+              v-if="f.type.startsWith('image/')"
+            />
+            <div
+              v-else
+              class="w-full flex flex-col items-center justify-center"
+            >
+              <IconFile :width="24" :height="24" />
+              <div class="w-full text-center text-xs text-gray-500">
+                {{ f.name.split(".").pop().toUpperCase() }}
+              </div>
+            </div>
+
+            <Transition name="fade">
+              <div
+                class="absolute bottom-0 left-0 w-full h-full rounded-lg flex flex-row items-center justify-center bg-black/50"
+                v-if="uploadingFile.indexOf(f.name) > -1"
+              >
+                <span
+                  class="loading loading-spinner loading-md text-(--color-base-100)"
+                ></span>
+              </div>
+            </Transition>
+
+            <Transition name="fade">
+              <div
+                class="absolute bottom-0 left-0 w-full h-full rounded-lg flex flex-row items-center justify-center bg-(--color-base-100)/90"
+                v-if="
+                  uploadedFiles.find(
+                    (uf) => uf.filename === f.name && uf.code !== 200
+                  )
+                "
+              >
+                <div
+                  class="glass px-2 py-1 text-orange-600 text-xs text-shadow-lg select-none"
+                >
+                  上传失败
+                </div>
+              </div>
+            </Transition>
+          </div>
+
+          <div
+            class="absolute w-4 h-4 right-[-8px] top-[-8px] bg-(--color-warning) shadow-md rounded-full flex items-center justify-center z-9 p-1 invisible group-hover/item:visible transition-opacity duration-300"
+            @click="handleRemoveFile(f)"
+          >
+            <IconClose
+              color="var(--color-warning-content)"
+              width="14"
+              height="14"
+            />
+          </div>
+        </div>
+        <button
+          class="btn btn-circle btn-sm tooltip tooltip-top relative"
+          data-tip="选择附件"
+        >
+          <IconUpload color="var(--color-base-content)" />
+
+          <input
+            type="file"
+            class="file-input file-input-ghost absolute w-full h-full opacity-0 p-0"
+            accept="*/*"
+            multiple
+            ref="fileInputRef"
+            @change="handleFileChange"
+          />
+        </button>
+      </div>
+
       <button
         class="btn btn-neutral mt-4"
         @click="createSchedule"
@@ -214,14 +299,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, type Ref, watch, computed } from "vue";
+import IconUpload from "@/components/icons/IconUpload.vue";
 import IconClose from "@/components/icons/IconClose.vue";
+import IconFile from "@/components/icons/IconFile.vue";
 import { useMessageStore } from "@/stores/message.store";
 import IconReload from "@/components/icons/IconReload.vue";
 import { useToast } from "vue-toastification";
 import { EMessageType } from "@/types";
 import { useRoute } from "vue-router";
 import { ElDatePicker } from "element-plus";
-import { getDayOfWeek } from "@/utils/time";
 
 interface ClassEntity {
   row_number?: number;
@@ -238,14 +324,6 @@ interface ScheduleEntity {
   date: Date;
   range: Date[];
   repeat: boolean;
-  dayOfWeek:
-    | "monday"
-    | "tuesday"
-    | "wednesday"
-    | "thursday"
-    | "friday"
-    | "saturday"
-    | "sunday";
 }
 
 interface ReminderEntity {
@@ -280,7 +358,11 @@ const isCreatingSchedule = ref(false);
 
 const isLoadingClassSchedulesAndReminders = ref(false);
 
+const fileInputRef = ref();
+
 const contentRef = ref();
+
+const selectedFiles: Ref<{ path: string; [key: string]: any }[]> = ref([]);
 
 const uploadingFile = ref<string[]>([]);
 
@@ -304,7 +386,6 @@ const formData = ref<FormData>({
       date: new Date(),
       range: [new Date(), new Date(new Date().setHours(23, 59, 59, 999))],
       repeat: true,
-      dayOfWeek: getDayOfWeek(new Date().getTime()),
     },
   ],
   attachments: [],
@@ -391,8 +472,6 @@ function insertAtCursor(text: string) {
 function dataTimeChange(value: Date[], index: number) {
   const date = formData.value.schedule[index].date;
 
-  formData.value.schedule[index].dayOfWeek = getDayOfWeek(date.getTime());
-
   formData.value.schedule[index].range = value.map((item) => {
     const h = item.getHours();
     const m = item.getMinutes();
@@ -402,8 +481,6 @@ function dataTimeChange(value: Date[], index: number) {
 }
 function dataChange(value: Date, index: number) {
   formData.value.schedule[index].date = value;
-
-  formData.value.schedule[index].dayOfWeek = getDayOfWeek(value.getTime());
 
   formData.value.schedule[index].range.map((item) => {
     const h = item.getHours();
@@ -462,7 +539,6 @@ async function getScheduleByClassId(classId: string) {
             date: new Date(item.start),
             range: [new Date(item.start), new Date(item.end)],
             repeat: item.repeat == "是",
-            dayOfWeek: getDayOfWeek(new Date(item.start).getTime()),
           }));
 
           const reminders = res.data.list[0].reminders
@@ -479,7 +555,6 @@ async function getScheduleByClassId(classId: string) {
               date: new Date(),
               range: [new Date(), new Date()],
               repeat: true,
-              dayOfWeek: getDayOfWeek(new Date().getTime()),
             },
           ];
           formData.value.reminders = [
@@ -495,7 +570,6 @@ async function getScheduleByClassId(classId: string) {
             date: new Date(),
             range: [new Date(), new Date()],
             repeat: true,
-            dayOfWeek: getDayOfWeek(new Date().getTime()),
           },
         ];
         formData.value.reminders = [
@@ -512,7 +586,6 @@ async function getScheduleByClassId(classId: string) {
           date: new Date(),
           range: [new Date(), new Date()],
           repeat: true,
-          dayOfWeek: getDayOfWeek(new Date().getTime()),
         },
       ];
       formData.value.reminders = [
@@ -532,12 +605,41 @@ function addSchedule() {
     date: new Date(),
     range: [new Date(), new Date()],
     repeat: true,
-    dayOfWeek: getDayOfWeek(new Date().getTime()),
   });
 }
 
 function deleteSchedule(index: number) {
   formData.value.schedule.splice(index, 1);
+}
+
+function readFilePath(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const p = e.target!.result as string;
+      const idx = selectedFiles.value.findIndex((f) => f.path === p);
+      if (idx === -1) {
+        resolve(e.target!.result as string);
+      } else {
+        resolve("");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleRemoveFile(file: any) {
+  const idx = selectedFiles.value.findIndex((f) => f.path === file.path);
+  if (idx !== -1) {
+    selectedFiles.value.splice(idx, 1);
+  }
+
+  const idx2 = uploadedFiles.value.findIndex((f) => f.filename === file.name);
+  if (idx2 !== -1) {
+    uploadedFiles.value.splice(idx2, 1);
+  }
+
+  fileInputRef.value!.value = "";
 }
 
 function uploadFilesResponseHandler(message: any) {
@@ -565,6 +667,44 @@ function uploadFilesResponseHandler(message: any) {
     });
   }
   isUploadingFiles.value = false;
+}
+
+async function handleFileChange(e: Event) {
+  if (isUploadingFiles.value) {
+    return;
+  }
+
+  const files = (e.target as HTMLInputElement).files;
+
+  const newFiles: { path: string; [key: string]: any }[] = [];
+  if (!files) return;
+
+  isUploadingFiles.value = true;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const p = await readFilePath(file);
+    if (p) {
+      newFiles.push({
+        file,
+        path: p,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+      uploadingFile.value.push(file.name);
+    }
+  }
+
+  selectedFiles.value = [...selectedFiles.value, ...newFiles];
+
+  const uploadId = await messageStore.uploadFiles({
+    files: newFiles.map((f) => f.file),
+  });
+
+  if (uploadId && uploadIds.value.indexOf(uploadId) === -1) {
+    uploadIds.value.push(uploadId);
+  }
 }
 
 function addReminder() {
@@ -643,7 +783,6 @@ function createSchedule() {
     start: item.range[0],
     end: item.range[1],
     repeat: item.repeat,
-    dayOfWeek: item.dayOfWeek,
   }));
 
   messageStore
