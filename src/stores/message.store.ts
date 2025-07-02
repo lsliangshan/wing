@@ -163,12 +163,12 @@ export const useMessageStore = defineStore("message", () => {
 
   function createSchedule(params: { data: any }) {
     return new Promise((resolve, reject) => {
-      const schedules = [...params.data.schedule].map((item) => {
-        return {
-          ...item,
-          dateStr: formatTimeRange(item.start, item.end),
-        };
-      });
+      // const schedules = [...params.data.schedule].map((item) => {
+      //   return {
+      //     ...item,
+      //     dateStr: formatTimeRange(item.start, item.end),
+      //   };
+      // });
 
       const id = nanoid();
       sharedWorker.value.port.postMessage({
@@ -178,10 +178,10 @@ export const useMessageStore = defineStore("message", () => {
           method: "POST",
           url: `https://wf.liangqy.com/webhook${
             env === "local" ? "-test" : ""
-          }/class/schedule`,
+          }/add-schedule`,
           data: {
             ...params.data,
-            schedule: schedules,
+            // schedule: schedules,
           },
         },
       });

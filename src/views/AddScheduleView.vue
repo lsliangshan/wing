@@ -14,6 +14,7 @@
           class="select w-full"
           :disabled="!!route.query.classId"
           v-model="formData.classId"
+          @change="changeClass"
         >
           <option disabled selected>请选择一个班级</option>
           <option
@@ -60,7 +61,7 @@
         >
           <input
             type="checkbox"
-            v-model="schedule.repeat"
+            v-model="schedule.repeats"
             class="checkbox checkbox-sm checked:border-orange-500 checked:bg-orange-400 checked:text-orange-800"
           />
         </div>
@@ -69,7 +70,7 @@
             v-model="schedule.date"
             type="date"
             size="large"
-            :format="schedule.repeat ? 'ddd' : 'YYYY-MM-DD'"
+            :format="schedule.repeats ? 'ddd' : 'YYYY-MM-DD'"
             placeholder="选择日期"
             style="width: 100%"
             @change="dataChange($event, index)"
@@ -221,7 +222,7 @@ import { useToast } from "vue-toastification";
 import { EMessageType } from "@/types";
 import { useRoute } from "vue-router";
 import { ElDatePicker } from "element-plus";
-import { getDayOfWeek } from "@/utils/time";
+import { formatTime, getDayOfWeek } from "@/utils/time";
 
 interface ClassEntity {
   row_number?: number;
@@ -229,6 +230,7 @@ interface ClassEntity {
   name: string;
   teacherName?: string;
   teacherEnName?: string;
+  teacherUnionId?: string;
   teacherId?: string;
   link?: string;
   assistant?: string;
@@ -237,7 +239,7 @@ interface ClassEntity {
 interface ScheduleEntity {
   date: Date;
   range: Date[];
-  repeat: boolean;
+  repeats: boolean;
   dayOfWeek:
     | "monday"
     | "tuesday"
@@ -255,6 +257,7 @@ interface ReminderEntity {
 
 interface FormData {
   classId: string;
+  teacherUnionId: string;
   schedule: ScheduleEntity[];
   attachments: string[];
   reminders: ReminderEntity[];
@@ -299,11 +302,12 @@ const uploadedFiles: Ref<
 
 const formData = ref<FormData>({
   classId: "",
+  teacherUnionId: "",
   schedule: [
     {
       date: new Date(),
       range: [new Date(), new Date(new Date().setHours(23, 59, 59, 999))],
-      repeat: true,
+      repeats: true,
       dayOfWeek: getDayOfWeek(new Date().getTime()),
     },
   ],
@@ -405,12 +409,19 @@ function dataChange(value: Date, index: number) {
 
   formData.value.schedule[index].dayOfWeek = getDayOfWeek(value.getTime());
 
-  formData.value.schedule[index].range.map((item) => {
+  formData.value.schedule[index].range = formData.value.schedule[
+    index
+  ].range.map((item) => {
     const h = item.getHours();
     const m = item.getMinutes();
-
     return new Date(value.setHours(h, m, 0, 0));
   });
+}
+
+function changeClass(e: Event) {
+  const classId = (e.target as HTMLSelectElement).value;
+  formData.value.teacherUnionId =
+    classes.value.find((c) => c.id === classId)?.teacherUnionId || "";
 }
 
 async function getClasses(isInit: boolean = false) {
@@ -461,7 +472,7 @@ async function getScheduleByClassId(classId: string) {
           formData.value.schedule = res.data.list.map((item: any) => ({
             date: new Date(item.start),
             range: [new Date(item.start), new Date(item.end)],
-            repeat: item.repeat == "是",
+            repeats: item.repeats == "1",
             dayOfWeek: getDayOfWeek(new Date(item.start).getTime()),
           }));
 
@@ -478,7 +489,7 @@ async function getScheduleByClassId(classId: string) {
             {
               date: new Date(),
               range: [new Date(), new Date()],
-              repeat: true,
+              repeats: true,
               dayOfWeek: getDayOfWeek(new Date().getTime()),
             },
           ];
@@ -494,7 +505,7 @@ async function getScheduleByClassId(classId: string) {
           {
             date: new Date(),
             range: [new Date(), new Date()],
-            repeat: true,
+            repeats: true,
             dayOfWeek: getDayOfWeek(new Date().getTime()),
           },
         ];
@@ -511,7 +522,7 @@ async function getScheduleByClassId(classId: string) {
         {
           date: new Date(),
           range: [new Date(), new Date()],
-          repeat: true,
+          repeats: true,
           dayOfWeek: getDayOfWeek(new Date().getTime()),
         },
       ];
@@ -531,7 +542,7 @@ function addSchedule() {
   formData.value.schedule.push({
     date: new Date(),
     range: [new Date(), new Date()],
-    repeat: true,
+    repeats: true,
     dayOfWeek: getDayOfWeek(new Date().getTime()),
   });
 }
@@ -622,6 +633,7 @@ function createSchedule() {
 
   let requestData: any = {
     classId: formData.value.classId,
+    teacherUnionId: formData.value.teacherUnionId,
     title: formData.value.title,
     content: formData.value.content,
     schedule: [],
@@ -640,9 +652,9 @@ function createSchedule() {
   }));
 
   requestData.schedule = formData.value.schedule.map((item) => ({
-    start: item.range[0],
-    end: item.range[1],
-    repeat: item.repeat,
+    start: formatTime(item.range[0].getTime()),
+    end: formatTime(item.range[1].getTime()),
+    repeats: item.repeats,
     dayOfWeek: item.dayOfWeek,
   }));
 
