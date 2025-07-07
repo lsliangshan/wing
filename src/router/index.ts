@@ -4,6 +4,7 @@ import AddTeacherView from "../views/AddTeacherView.vue";
 import AddClassView from "../views/AddClassView.vue";
 import AddStudentView from "../views/AddStudentView.vue";
 import LoginView from "../views/LoginView.vue";
+import DingtalkLogin from "../views/DingtalkLogin.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,11 @@ const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
+    },
+    {
+      path: "/dingtalk/login",
+      name: "dingtalk-login",
+      component: DingtalkLogin,
     },
   ],
 });

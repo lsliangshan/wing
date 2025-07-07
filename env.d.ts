@@ -6,3 +6,7 @@ declare module "*?sharedworker" {
   };
   export default workerConstructor;
 }
+
+declare interface Window {
+  flutter_inappwebview: any;
+}
