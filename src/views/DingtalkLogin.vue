@@ -20,6 +20,16 @@
         </div>
       </template>
     </div>
+    <Transition name="fade">
+      <div
+        class="absolute top-0 left-0 w-full h-full bg-white flex flex-col items-center justify-center"
+        v-if="!isReady"
+      >
+        <div class="text-black text-[16px]">
+          <span class="loading loading-spinner loading-lg text-black"></span>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -38,6 +48,8 @@ const $emit = defineEmits<{
   (e: "success", userInfo: any): void;
   (e: "fail"): void;
 }>();
+
+const isReady = ref(false);
 
 const elId = ref(nanoid());
 
@@ -112,6 +124,7 @@ function initLoginQrcode() {
     async (loginResult: any) => {
       const { authCode } = loginResult;
       isLogin.value = true;
+
       getDingtalkUserInfo({ code: authCode }).then((res: any) => {
         if (res.code == 200) {
           // 获取用户信息成功
@@ -150,6 +163,11 @@ function initLoginQrcode() {
       }
     }
   );
+
+  const t = setTimeout(() => {
+    clearTimeout(t);
+    isReady.value = true;
+  }, 1000);
 }
 </script>
 
