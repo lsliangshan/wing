@@ -9,4 +9,5 @@ declare module "*?sharedworker" {
 
 declare interface Window {
   flutter_inappwebview: any;
+  DTFrameLogin: any;
 }
